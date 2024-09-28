@@ -95,8 +95,8 @@ function inplayquotes_install()
     $setting_array = array(
         // A text setting
         'iq_selectforum' => array(
-            'title' => "Inplaykategorie",
-            'description' => "Wähle hier die Inplaykategorie aus",
+            'title' => "Inplayforen",
+            'description' => "Wähle hier die Inplayforen aus",
             'optionscode' => 'forumselect',
             'value' => '1', // Default
             'disporder' => 1
