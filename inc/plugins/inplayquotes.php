@@ -95,8 +95,8 @@ function inplayquotes_install()
     $setting_array = array(
         // A text setting
         'iq_selectforum' => array(
-            'title' => "Inplayforen",
-            'description' => "Wähle hier die Inplayforen aus",
+            'title' => "Inplaykategorie",
+            'description' => "Wähle hier die Inplaykategorie aus",
             'optionscode' => 'forumselect',
             'value' => '1', // Default
             'disporder' => 1
@@ -114,7 +114,7 @@ function inplayquotes_install()
             'title' => "Anzeige des Avatars",
             'description' => "Soll bei den Zitaten ein Avatar angezeigt werden?",
             'optionscode' => 'yesno',
-            'value' => 0,
+            'value' => 1,
             'disporder' => 3
         ),
         'iq_profilfield' => array(
@@ -130,6 +130,13 @@ function inplayquotes_install()
             'optionscode' => 'text',
             'value' => "fid1",
             'disporder' => 5
+        ),
+        'iq_guestpic' => array(
+            'title' => "Alternative für Gäste",
+            'description' => "Welches Alternative Bild soll für Gäste angezeigt werden?",
+            'optionscode' => 'text',
+            'value' => "noavatar.php",
+            'disporder' => 6
         ),
     );
 
@@ -454,7 +461,7 @@ function inplayquotes_uninstall()
 {
     global $db, $cache;
 
-    $db->delete_query('settings', "name IN ('iq_selectforum', 'iq_avatar', 'iq_profilfield', 'iq_get_profilfield', 'iq_withava')");
+    $db->delete_query('settings', "name IN ('iq_selectforum', 'iq_avatar', 'iq_profilfield', 'iq_get_profilfield', 'iq_withava', 'iq_guestpic')");
     $db->delete_query('settinggroups', "name = 'inplayquotes'");
 
     rebuild_settings();
@@ -565,6 +572,7 @@ function inplayquotes_settings_peek(&$peekers)
         $peekers[] = 'new Peeker($(".setting_iq_withava"), $("#row_setting_iq_avatar"),/1/,true)';
         $peekers[] = 'new Peeker($(".setting_iq_withava"), $("#row_setting_iq_profilfield"),/1/,true)';
         $peekers[] = 'new Peeker($(".setting_iq_profilfield"), $("#row_setting_iq_get_profilfield"),/1/,true)';
+        $peekers[] = 'new Peeker($(".setting_iq_withava"), $("#row_setting_iq_guestpic"),/1/,true)';
    
 
     }
@@ -626,6 +634,7 @@ function inplayquotes_misc()
     $setting_avatar = $mybb->settings['iq_avatar'];
     $setting_pf = $mybb->settings['iq_profilfield'];
     $setting_pf_fid = $mybb->settings['iq_get_profilfield'];
+    $default_avatar = $mybb->settings['iq_guestpic'];
 
 
     if ($mybb->get_input('action') == 'add_quote') {
@@ -711,6 +720,9 @@ function inplayquotes_misc()
                     $avatar = $quotes['avatar'];
                 } elseif ($setting_avatar == 0 && $setting_pf == 1) {
                     $avatar = $db->fetch_field($db->simple_select("userfields", "{$setting_pf_fid}", "ufid = '{$uid}'"), $setting_pf_fid);
+                }
+                If($mybb->user['uid'] == 0){
+                    $avatar = "{$theme['imgdir']}/{$default_avatar}";
                 }
                 eval ('$inplayquotes_misc_bit  .= "' . $templates->get('inplayquotes_misc_bit_avatar') . '";');
             }
