@@ -18,6 +18,8 @@ $l['iq_index_noquotes'] = "<div class='inplayquotes_index_noquote smalltext'>Akt
 
 $l['iq_profile_outof'] = "Zitat aus <b>{1}</b>";
 
+$l['iq_wiw'] = "<a href='misc.php?action=inplayquotes'>Sieht sich die Inplayzitate an.</a>";
+
 // Alert
 $l['iq_alert'] = "{1} hat ein neues Zitat von dir eingereicht.";
 $l['myalerts_setting_iq_alert'] = "Möchtest du eine Benachrichtung, wenn ein Zitat von dir eingereicht worden ist?";

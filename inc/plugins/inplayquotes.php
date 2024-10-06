@@ -32,6 +32,10 @@ $plugins->add_hook('build_forumbits_forum ', 'inplayquotes_forumbit_forum');
 // profile
 $plugins->add_hook('member_profile_end', 'inplayquotes_member_profile');
 
+//wer ist wo
+$plugins->add_hook('fetch_wol_activity_end', 'inplayquotes_user_activity');
+$plugins->add_hook('build_friendly_wol_location_end', 'inplayquotes_location_activity');
+
 function inplayquotes_info()
 {
     return array(
@@ -952,4 +956,24 @@ function inplayquotes_alerts()
             new MybbStuff_MyAlerts_Formatter_InplayquotesFormatter($mybb, $lang, 'iq_alert')
         );
     }
+}
+
+function inplayquotes_user_activity($user_activity)
+{
+    global $user;
+    if (my_strpos($user['location'], "misc.php?action=inplayquotes") !== false) {
+        $user_activity['activity'] = "inplayquotes";
+    }
+
+    return $user_activity;
+}
+
+function inplayquotes_location_activity($plugin_array)
+{
+    global $db, $mybb, $lang;
+    $lang->load('inplayquotes');
+    if ($plugin_array['user_activity']['activity'] == "inplayquotes") {
+        $plugin_array['location_name'] = $lang->iq_wiw;
+    }
+    return $plugin_array;
 }
