@@ -517,8 +517,6 @@ function inplayquotes_activate()
         $alertTypeManager->add($alertType);
 
     }
-
-
     require MYBB_ROOT . "/inc/adminfunctions_templates.php";
     find_replace_templatesets("postbit", "#" . preg_quote('	{$post[\'button_edit\']}') . "#i", '{$post[\'quotes\']}	{$post[\'button_edit\']}');
     find_replace_templatesets("postbit_classic", "#" . preg_quote('	{$post[\'button_edit\']}') . "#i", '{$post[\'quotes\']}	{$post[\'button_edit\']}');
@@ -547,13 +545,16 @@ function inplayquotes_deactivate()
 }
 function inplayquotes_permission($above)
 {
-    global $mybb, $lang, $form;
+    global $mybb, $lang, $form, $form_container, $run_module;
 
-    if ($above['title'] == $lang->misc && $lang->misc) {
-        $above['content'] .= "<div class=\"group_settings_bit\">" . $form->generate_check_box("canquoteinplay", 1, "Kann Inplayquotes hinzufügen?", array("checked" => $_POST['canquoteinplay'])) . "</div>";
+    if($run_module == 'user' && !empty($form_container->_title) & !empty($lang->misc) & $form_container->_title == $lang->misc)
+    {
+        $avatar2go_options = array(
+            $form->generate_check_box('canquoteinplay', 1, "Kann Inplayquotes hinzufügen?", array("checked" => $mybb->input['canquoteinplay'])),
+        );
+        $form_container->output_row("Inplayzitate", "", "<div class=\"group_settings_bit\">".implode("</div><div class=\"group_settings_bit\">", $avatar2go_options)."</div>");
     }
 
-    return $above;
 }
 
 function inplayquotes_permission_commit()
@@ -703,7 +704,7 @@ function inplayquotes_misc()
             $avatar = "";
             $option = "";
             $uid = 0;
-     
+
 
             $tid = $quotes['tid'];
             $pid = $quotes['pid'];
@@ -735,7 +736,7 @@ function inplayquotes_misc()
 
 
         if (isset($mybb->input['deletequote'])) {
-        $deletequote = $mybb->input['deletequote'];
+            $deletequote = $mybb->input['deletequote'];
             $db->delete_query("inplayquotes", "qid = {$deletequote}");
             redirect("misc.php?action=inplayquotes");
         }
@@ -902,14 +903,24 @@ function inplayquotes_member_profile()
     $avatar = "";
     $option = "";
 
-    $tid = $quotes['tid'];
-    $pid = $quotes['pid'];
+    if (isset($quotes['tid'])) {
+        $tid = $quotes['tid'];
+    }
+    if (isset($quotes['pid'])) {
+        $pid = $quotes['pid'];
+    }
+    if (isset($quotes['subject'])) {
+        $subject = "<a href='showthread.php?tid={$tid}&pid={$pid}#pid{$pid}'>{$quotes['subject']}</a>";
+    }
 
-    $subject = "<a href='showthread.php?tid={$tid}&pid={$pid}#pid{$pid}'>{$quotes['subject']}</a>";
-    $quote = $parser->parse_message($quotes['quote'], $options);
+    if (isset($quotes['quote'])) {
+        $quote = $parser->parse_message($quotes['quote'], $options);
+    }
+
     $quote_outof = $lang->sprintf($lang->iq_profile_outof, $subject);
-
-    eval ('$inplayquotes_profile  = "' . $templates->get('inplayquotes_profile') . '";');
+    if (!empty($quotes)) {
+        eval ('$inplayquotes_profile  = "' . $templates->get('inplayquotes_profile') . '";');
+    }
 
 }
 
