@@ -32,16 +32,12 @@ $plugins->add_hook('build_forumbits_forum ', 'inplayquotes_forumbit_forum');
 // profile
 $plugins->add_hook('member_profile_end', 'inplayquotes_member_profile');
 
-//wer ist wo
-$plugins->add_hook('fetch_wol_activity_end', 'inplayquotes_user_activity');
-$plugins->add_hook('build_friendly_wol_location_end', 'inplayquotes_location_activity');
-
 function inplayquotes_info()
 {
     return array(
         "name" => "Inplayzitate",
         "description" => "Gibt die Möglichkeit, das User Inplayzitate einschicken können.",
-        "website" => "https://github.com/Ales12/inplayquotes",
+        "website" => "",
         "author" => "Ales",
         "authorsite" => "https://github.com/Ales12",
         "version" => "1.0",
@@ -54,7 +50,8 @@ function inplayquotes_info()
 function inplayquotes_install()
 {
 
-    global $db, $cache, $mybb;
+    global $db, $cache, $mybb, $lang;
+    $lang->load('inplayquotes');
 
     // normale Datenbank erstellen
     if ($db->engine == 'mysql' || $db->engine == 'mysqli') {
@@ -118,7 +115,7 @@ function inplayquotes_install()
             'title' => "Anzeige des Avatars",
             'description' => "Soll bei den Zitaten ein Avatar angezeigt werden?",
             'optionscode' => 'yesno',
-            'value' => 1,
+            'value' => 0,
             'disporder' => 3
         ),
         'iq_profilfield' => array(
@@ -135,13 +132,21 @@ function inplayquotes_install()
             'value' => "fid1",
             'disporder' => 5
         ),
-        'iq_guestpic' => array(
-            'title' => "Alternative für Gäste",
-            'description' => "Welches Alternative Bild soll für Gäste angezeigt werden?",
-            'optionscode' => 'text',
-            'value' => "noavatar.php",
+        'iq_forumbit' => array(
+            'title' => "In Forum anzeigen",
+            'description' => "Soll es nicht in der Statistik sondern innerhalb des Forum angezeigt werden?",
+            'optionscode' => 'yesno',
+            'value' => 0,
             'disporder' => 6
         ),
+        'iq_selectforumbit' => array(
+            'title' => "Forumanzeige",
+            'description' => "Bei welchem Forum soll das Zitat auftauchen?",
+            'optionscode' => 'forumselectsingle ',
+            'value' => '1', // Default
+            'disporder' => 7
+        ),
+
     );
 
     foreach ($setting_array as $name => $setting) {
@@ -465,7 +470,7 @@ function inplayquotes_uninstall()
 {
     global $db, $cache;
 
-    $db->delete_query('settings', "name IN ('iq_selectforum', 'iq_avatar', 'iq_profilfield', 'iq_get_profilfield', 'iq_withava', 'iq_guestpic')");
+    $db->delete_query('settings', "name IN ('iq_selectforum', 'iq_avatar', 'iq_profilfield', 'iq_get_profilfield', 'iq_withava', 'iq_selectforumbit', 'iq_forumbit')");
     $db->delete_query('settinggroups', "name = 'inplayquotes'");
 
     rebuild_settings();
@@ -576,8 +581,7 @@ function inplayquotes_settings_peek(&$peekers)
         $peekers[] = 'new Peeker($(".setting_iq_withava"), $("#row_setting_iq_avatar"),/1/,true)';
         $peekers[] = 'new Peeker($(".setting_iq_withava"), $("#row_setting_iq_profilfield"),/1/,true)';
         $peekers[] = 'new Peeker($(".setting_iq_profilfield"), $("#row_setting_iq_get_profilfield"),/1/,true)';
-        $peekers[] = 'new Peeker($(".setting_iq_withava"), $("#row_setting_iq_guestpic"),/1/,true)';
-   
+        $peekers[] = 'new Peeker($(".setting_iq_forumbit"), $("#row_setting_iq_selectforumbit"),/1/,true)';
 
     }
 }
@@ -617,7 +621,7 @@ function inplayquotes_postbit(&$post)
 function inplayquotes_misc()
 {
 
-    global $mybb, $templates, $lang, $header, $headerinclude, $footer, $db, $lang, $parser, $subject, $author, $quote, $quote_by, $quote_outof, $option;
+    global $mybb, $templates, $lang, $header, $headerinclude, $footer, $db, $lang, $parser, $subject, $author, $quote, $quote_by, $quote_outof, $option, $theme;
     $lang->load('inplayquotes');
 
     require_once MYBB_ROOT . "inc/class_parser.php";
@@ -638,7 +642,6 @@ function inplayquotes_misc()
     $setting_avatar = $mybb->settings['iq_avatar'];
     $setting_pf = $mybb->settings['iq_profilfield'];
     $setting_pf_fid = $mybb->settings['iq_get_profilfield'];
-    $default_avatar = $mybb->settings['iq_guestpic'];
 
 
     if ($mybb->get_input('action') == 'add_quote') {
@@ -690,7 +693,7 @@ function inplayquotes_misc()
         on (p.pid = iq.pid)
         ORDER BY u.username ASC
         ");
-
+        $inplayquotes_misc_bit = "";
         while ($quotes = $db->fetch_array($all_quotes)) {
             $subject = "";
             $quote = "";
@@ -700,6 +703,7 @@ function inplayquotes_misc()
             $avatar = "";
             $option = "";
             $uid = 0;
+     
 
             $tid = $quotes['tid'];
             $pid = $quotes['pid'];
@@ -725,16 +729,13 @@ function inplayquotes_misc()
                 } elseif ($setting_avatar == 0 && $setting_pf == 1) {
                     $avatar = $db->fetch_field($db->simple_select("userfields", "{$setting_pf_fid}", "ufid = '{$uid}'"), $setting_pf_fid);
                 }
-                If($mybb->user['uid'] == 0){
-                    $avatar = "{$theme['imgdir']}/{$default_avatar}";
-                }
                 eval ('$inplayquotes_misc_bit  .= "' . $templates->get('inplayquotes_misc_bit_avatar') . '";');
             }
         }
 
-        $deletequote = $mybb->input['deletequote'];
 
-        if ($deletequote) {
+        if (isset($mybb->input['deletequote'])) {
+        $deletequote = $mybb->input['deletequote'];
             $db->delete_query("inplayquotes", "qid = {$deletequote}");
             redirect("misc.php?action=inplayquotes");
         }
@@ -785,13 +786,28 @@ function inplayquotes_index()
     $pid = 0;
     $avatar = "";
     $option = "";
+    $quote_by = "";
+    $quote_outof = "";
 
-    $tid = $quotes['tid'];
-    $pid = $quotes['pid'];
+    if (isset($quotes['tid'])) {
+        $tid = $quotes['tid'];
+    }
+    if (isset($quotes['pid'])) {
+        $pid = $quotes['pid'];
+    }
 
-    $subject = "<a href='showthread.php?tid={$tid}&pid={$pid}#pid{$pid}'>{$quotes['subject']}</a>";
-    $quote = $parser->parse_message($quotes['quote'], $options);
-    $author = build_profile_link($quotes['username'], $quotes['uid']);
+    if (isset($quotes['subject'])) {
+        $subject = "<a href='showthread.php?tid={$tid}&pid={$pid}#pid{$pid}'>{$quotes['subject']}</a>";
+    }
+
+    if (isset($quotes['quote'])) {
+        $quote = $parser->parse_message($quotes['quote'], $options);
+    }
+    if (isset($quotes['username'])) {
+        $author = build_profile_link($quotes['username'], $quotes['uid']);
+    }
+
+
 
 
     $quote_by = $lang->sprintf($lang->iq_index_quoteby, $author);
@@ -808,6 +824,39 @@ function inplayquotes_index()
     eval ('$inplayquotes_forumbit  = "' . $templates->get('inplayquotes_forumbit') . '";');
 }
 
+function inplayquotes_forumbit_forum(&$forum)
+{
+    global $lang, $mybb, $db, $templates, $parser, $inplayquotes_forumbit;
+
+    $lang->load('inplayquotes');
+
+    require_once MYBB_ROOT . "inc/class_parser.php";
+    $parser = new postParser;
+
+    $options = array(
+        "allow_html" => 1,
+        "allow_mycode" => 1,
+        "allow_smilies" => 1,
+        "allow_imgcode" => 1,
+        "filter_badwords" => 0,
+        "nl2br" => 1,
+        "allow_videocode" => 0
+    );
+
+    // Settings
+    $forumbit = $mybb->settings['iq_forumbit'];
+    $forum_id = $mybb->settings['iq_selectforumbit'];
+
+    if ($forumbit == 1) {
+
+        if ($forum['fid'] == $forum_id) {
+            $forum['inplayquotes'] = $inplayquotes_forumbit;
+        }
+
+    }
+    return $forum;
+
+}
 
 function inplayquotes_member_profile()
 {
@@ -860,9 +909,7 @@ function inplayquotes_member_profile()
     $quote = $parser->parse_message($quotes['quote'], $options);
     $quote_outof = $lang->sprintf($lang->iq_profile_outof, $subject);
 
-    if (!empty($quotes)) {
-        eval ('$inplayquotes_profile  = "' . $templates->get('inplayquotes_profile') . '";');
-    }
+    eval ('$inplayquotes_profile  = "' . $templates->get('inplayquotes_profile') . '";');
 
 }
 
@@ -956,24 +1003,4 @@ function inplayquotes_alerts()
             new MybbStuff_MyAlerts_Formatter_InplayquotesFormatter($mybb, $lang, 'iq_alert')
         );
     }
-}
-
-function inplayquotes_user_activity($user_activity)
-{
-    global $user;
-    if (my_strpos($user['location'], "misc.php?action=inplayquotes") !== false) {
-        $user_activity['activity'] = "inplayquotes";
-    }
-
-    return $user_activity;
-}
-
-function inplayquotes_location_activity($plugin_array)
-{
-    global $db, $mybb, $lang;
-    $lang->load('inplayquotes');
-    if ($plugin_array['user_activity']['activity'] == "inplayquotes") {
-        $plugin_array['location_name'] = $lang->iq_wiw;
-    }
-    return $plugin_array;
 }
