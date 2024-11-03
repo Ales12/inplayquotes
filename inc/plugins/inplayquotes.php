@@ -5,8 +5,9 @@ if (!defined("IN_MYBB")) {
 }
 
 // ACP
-$plugins->add_hook("admin_formcontainer_output_row", "inplayquotes_permission");
-$plugins->add_hook("admin_user_groups_edit_commit", "inplayquotes_permission_commit");
+$plugins->add_hook("admin_formcontainer_end", "inplayquotes_usergroup_permission");
+$plugins->add_hook("admin_user_groups_edit_commit", "inplayquotes_usergroup_permission_commit");
+
 
 // postbit
 $plugins->add_hook("postbit", "inplayquotes_postbit");
@@ -543,23 +544,23 @@ function inplayquotes_deactivate()
     find_replace_templatesets("index_boardstats", "#" . preg_quote('{$inplayquotes_index}') . "#i", '', 0);
     find_replace_templatesets("member_profile", "#" . preg_quote('{$inplayquotes_profile}') . "#i", '', 0);
 }
-function inplayquotes_permission($above)
+// Usergruppen-Berechtigungen
+function inplayquotes_usergroup_permission()
 {
     global $mybb, $lang, $form, $form_container, $run_module;
 
-    if($run_module == 'user' && !empty($form_container->_title) & !empty($lang->misc) & $form_container->_title == $lang->misc)
-    {
-        $avatar2go_options = array(
-            $form->generate_check_box('canquoteinplay', 1, "Kann Inplayquotes hinzufügen?", array("checked" => $mybb->input['canquoteinplay'])),
+    if ($run_module == 'user' && !empty($form_container->_title) & !empty($lang->misc) & $form_container->_title == $lang->misc) {
+        $inplayquotes_options = array(
+            $form->generate_check_box('canquoteinplay', 1, "Kann einen neues Inplayzitat hinzufügen?", array("checked" => $mybb->input['canquoteinplay'])),
         );
-        $form_container->output_row("Inplayzitate", "", "<div class=\"group_settings_bit\">".implode("</div><div class=\"group_settings_bit\">", $avatar2go_options)."</div>");
+        $form_container->output_row("Einstellung für Inplayzitate", "", "<div class=\"group_settings_bit\">" . implode("</div><div class=\"group_settings_bit\">", $inplayquotes_options) . "</div>");
     }
-
+    
 }
 
-function inplayquotes_permission_commit()
+function inplayquotes_usergroup_permission_commit()
 {
-    global $mybb, $updated_group;
+    global $db, $mybb, $updated_group;
     $updated_group['canquoteinplay'] = $mybb->get_input('canquoteinplay', MyBB::INPUT_INT);
 }
 
